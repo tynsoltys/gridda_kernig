@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/gridda_kernig/static/css/main.32e5064b.css",
-    "main.js": "/gridda_kernig/static/js/main.ba84e197.js",
+    "main.css": "/gridda_kernig/static/css/main.3bccc33d.css",
+    "main.js": "/gridda_kernig/static/js/main.cfca9729.js",
     "static/js/453.9c52bde1.chunk.js": "/gridda_kernig/static/js/453.9c52bde1.chunk.js",
     "index.html": "/gridda_kernig/index.html",
-    "main.32e5064b.css.map": "/gridda_kernig/static/css/main.32e5064b.css.map",
-    "main.ba84e197.js.map": "/gridda_kernig/static/js/main.ba84e197.js.map",
+    "main.3bccc33d.css.map": "/gridda_kernig/static/css/main.3bccc33d.css.map",
+    "main.cfca9729.js.map": "/gridda_kernig/static/js/main.cfca9729.js.map",
     "453.9c52bde1.chunk.js.map": "/gridda_kernig/static/js/453.9c52bde1.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.32e5064b.css",
-    "static/js/main.ba84e197.js"
+    "static/css/main.3bccc33d.css",
+    "static/js/main.cfca9729.js"
   ]
 }
