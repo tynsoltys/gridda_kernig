@@ -13,7 +13,11 @@ interface GridPaperProps {
   side: 'Left' | 'Right';
   gridAlignment: GridAlignment;
   isSelected: boolean;
-  onSelect: () => void;
+  onSelect: (event: React.MouseEvent) => void;
+  title: string;
+  onTitleChange: (title: string) => void;
+  pageBackgroundColor: string;
+  gridLineThickness: number;
 }
 
 const GridPaper: React.FC<GridPaperProps> = ({ 
@@ -28,7 +32,11 @@ const GridPaper: React.FC<GridPaperProps> = ({
   side,
   gridAlignment,
   isSelected,
-  onSelect
+  onSelect,
+  title,
+  onTitleChange,
+  pageBackgroundColor,
+  gridLineThickness
 }) => {
   const getPaperDimensions = (size: PaperSize): { width: number; height: number } => {
     switch (size) {
@@ -87,12 +95,12 @@ const GridPaper: React.FC<GridPaperProps> = ({
     // Vertical lines
     for (let i = 0; i <= columns; i++) {
       const x = adjustedStartX + i * gridSizeNum;
-      lines.push(<line key={`v${i}`} x1={`${x}mm`} y1={`${startY}mm`} x2={`${x}mm`} y2={`${startY + gridHeight}mm`} stroke={gridColor} strokeWidth="0.1" />);
+      lines.push(<line key={`v${i}`} x1={`${x}mm`} y1={`${startY}mm`} x2={`${x}mm`} y2={`${startY + gridHeight}mm`} stroke={gridColor} strokeWidth={`${gridLineThickness}mm`} />);
     }
     // Horizontal lines
     for (let i = 0; i <= rows; i++) {
       const y = startY + i * gridSizeNum;
-      lines.push(<line key={`h${i}`} x1={`${adjustedStartX}mm`} y1={`${y}mm`} x2={`${adjustedStartX + gridWidth}mm`} y2={`${y}mm`} stroke={gridColor} strokeWidth="0.1" />);
+      lines.push(<line key={`h${i}`} x1={`${adjustedStartX}mm`} y1={`${y}mm`} x2={`${adjustedStartX + gridWidth}mm`} y2={`${y}mm`} stroke={gridColor} strokeWidth={`${gridLineThickness}mm`} />);
     }
     return lines;
   };
@@ -114,58 +122,68 @@ const GridPaper: React.FC<GridPaperProps> = ({
   };
 
   return (
-    <div 
-      className={`relative ${isSelected ? 'ring-4 ring-blue-300 ring-opacity-50' : ''}`} 
-      style={{ width: `${width}mm`, height: `${height}mm`, margin: '20px', cursor: 'pointer' }}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect();
-      }}
-    >
-      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full bg-white px-2 py-1 rounded shadow text-sm">
-        Page {pageNumber} - {side}
-      </div>
-      <div className="border border-gray-300 print:border-0 w-full h-full">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          {showBorder && (
-            <rect 
-              x={`${adjustedStartX}mm`} 
-              y={`${startY}mm`} 
-              width={`${gridWidth}mm`} 
-              height={`${gridHeight}mm`} 
-              fill="none" 
-              stroke={gridColor} 
-              strokeWidth="0.2" 
-            />
-          )}
-          {createGridLines()}
-          {showPageNumberInGrid && (
+    <div className="flex flex-col items-center mb-8">
+      <div 
+        className="relative"
+        style={{ width: `${width}mm`, cursor: 'pointer' }}
+        onClick={onSelect}
+      >
+        <div className="absolute top-0 left-0 right-0 h-8 flex items-center px-2">
+          <span className="text-sm font-medium mr-2">Page {pageNumber} - {side}</span>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => onTitleChange(e.target.value)}
+            placeholder="Add title"
+            className="flex-grow bg-transparent border-b border-gray-300 px-1 py-0.5 text-sm focus:outline-none focus:border-blue-500"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+        <div 
+          className={`border border-gray-300 print:border-0 w-full mt-8 ${isSelected ? 'ring-4 ring-blue-300 ring-opacity-50' : ''}`}
+          style={{ backgroundColor: pageBackgroundColor, height: `${height}mm` }}
+        >
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            {showBorder && (
+              <rect 
+                x={`${adjustedStartX}mm`} 
+                y={`${startY}mm`} 
+                width={`${gridWidth}mm`} 
+                height={`${gridHeight}mm`} 
+                fill="none" 
+                stroke={gridColor} 
+                strokeWidth={`${gridLineThickness}mm`} 
+              />
+            )}
+            {createGridLines()}
+            {showPageNumberInGrid && (
+              <text
+                x={`${pageNumberX}mm`}
+                y={`${pageNumberY}mm`}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize={`${gridSizeNum * 0.5}mm`}
+                fill={lightenColor(gridColor, 100)}
+                opacity="0.6"
+              >
+                {pageNumber}
+              </text>
+            )}
+            {/* Wordmark */}
             <text
-              x={`${pageNumberX}mm`}
-              y={`${pageNumberY}mm`}
+              x={`${wordmarkX}mm`}
+              y={`${wordmarkY}mm`}
               textAnchor="middle"
               dominantBaseline="middle"
-              fontSize={`${gridSizeNum * 0.5}mm`}
-              fill={lightenColor(gridColor, 100)}
-              opacity="0.6"
+              fontSize="2mm"
+              fill={lightenColor(gridColor, 150)}
+              opacity="0.4"
+              transform={`rotate(90, ${wordmarkX}, ${wordmarkY})`}
             >
-              {pageNumber}
+              @kooknhakn
             </text>
-          )}
-          {/* Wordmark */}
-          <text
-            x={`${wordmarkX}mm`}
-            y={`${wordmarkY}mm`}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fontSize="6"
-            fill={gridColor}
-            opacity="1"
-            transform={`rotate(90, ${wordmarkX}, ${wordmarkY})`}
-          >
-            @kooknhakn
-          </text>
-        </svg>
+          </svg>
+        </div>
       </div>
     </div>
   );

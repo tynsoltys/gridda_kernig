@@ -1,5 +1,5 @@
 import React from 'react';
-import { GridSize, PaperSize, GridAlignment } from '../App';
+import { GridSize, PaperSize, GridAlignment, Page } from '../App';
 
 interface ControlsProps {
   gridSize: GridSize;
@@ -14,16 +14,21 @@ interface ControlsProps {
   setShowExtraMargin: (show: boolean) => void;
   showPageNumberInGrid: boolean;
   setShowPageNumberInGrid: (show: boolean) => void;
-  addPage: () => void;
   minimumMargin: number;
   setMinimumMargin: (margin: number) => void;
   includePageZero: boolean;
   setIncludePageZero: (include: boolean) => void;
   gridAlignment: GridAlignment;
   setGridAlignment: (alignment: GridAlignment) => void;
-  selectedPages: number[];
-  setSelectedPages: React.Dispatch<React.SetStateAction<number[]>>;
-  pages: { id: number; side: 'Left' | 'Right' }[];
+  selectedPages: string[];
+  setSelectedPages: React.Dispatch<React.SetStateAction<string[]>>;
+  pages: Page[];
+  addPage: () => void;
+  updatePageTitle: (id: string, title: string) => void;
+  pageBackgroundColor: string;
+  setPageBackgroundColor: (color: string) => void;
+  gridLineThickness: number;
+  setGridLineThickness: (thickness: number) => void;
 }
 
 const Controls: React.FC<ControlsProps> = ({
@@ -39,7 +44,6 @@ const Controls: React.FC<ControlsProps> = ({
   setShowExtraMargin,
   showPageNumberInGrid,
   setShowPageNumberInGrid,
-  addPage,
   minimumMargin,
   setMinimumMargin,
   includePageZero,
@@ -49,14 +53,28 @@ const Controls: React.FC<ControlsProps> = ({
   selectedPages,
   setSelectedPages,
   pages,
+  addPage,
+  updatePageTitle,
+  pageBackgroundColor,
+  setPageBackgroundColor,
+  gridLineThickness,
+  setGridLineThickness,
 }) => {
   const handleSelectAll = () => {
-    const allPageIds = Array.from({ length: pages.length + (includePageZero ? 1 : 0) }, (_, i) => i);
+    const allPageIds = pages.map(page => page.id);
+    if (includePageZero) {
+      allPageIds.unshift("page-0");
+    }
     setSelectedPages(allPageIds);
   };
 
   const handleClearSelections = () => {
     setSelectedPages([]);
+  };
+
+  const handleGridLineThicknessChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    setGridLineThickness(Math.min(Math.max(value, 0.01), 1));
   };
 
   return (
@@ -205,6 +223,62 @@ const Controls: React.FC<ControlsProps> = ({
         >
           Clear Selections
         </button>
+      </div>
+
+      {/* Page Titles */}
+      <div className="space-y-2">
+        <h3 className="font-bold">Page Titles</h3>
+        {includePageZero && (
+          <div className="flex items-center">
+            <span className="w-8">0:</span>
+            <input
+              type="text"
+              value=""
+              onChange={(e) => updatePageTitle("page-0", e.target.value)}
+              className="flex-grow border rounded px-2 py-1"
+              placeholder="Page 0 Title"
+            />
+          </div>
+        )}
+        {pages.map((page) => (
+          <div key={page.id} className="flex items-center">
+            <span className="w-8">{page.number}:</span>
+            <input
+              type="text"
+              value={page.title}
+              onChange={(e) => updatePageTitle(page.id, e.target.value)}
+              className="flex-grow border rounded px-2 py-1"
+              placeholder={`Page ${page.number} Title`}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Page Background Color control */}
+      <div>
+        <label htmlFor="pageBackgroundColor" className="block mb-1">Page Background Color:</label>
+        <input
+          type="color"
+          id="pageBackgroundColor"
+          value={pageBackgroundColor}
+          onChange={(e) => setPageBackgroundColor(e.target.value)}
+          className="w-full h-8 border rounded p-1"
+        />
+      </div>
+
+      {/* Grid Line Thickness control */}
+      <div>
+        <label htmlFor="gridLineThickness" className="block mb-1">Grid Line Thickness (mm):</label>
+        <input
+          type="number"
+          id="gridLineThickness"
+          value={gridLineThickness}
+          onChange={handleGridLineThicknessChange}
+          step="0.01"
+          min="0.01"
+          max="1"
+          className="w-full border rounded p-1"
+        />
       </div>
     </div>
   );

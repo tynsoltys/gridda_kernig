@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { v4 as uuidv4 } from 'uuid'; // You'll need to install this package
 import GridPaper from './components/GridPaper';
 import Controls from './components/Controls';
 
@@ -11,8 +12,10 @@ export type PaperSize =
 export type GridAlignment = 'center' | 'float';
 
 export interface Page {
-  id: number;
+  id: string;
+  number: number;
   side: 'Left' | 'Right';
+  title: string;
 }
 
 function App() {
@@ -24,16 +27,19 @@ function App() {
   const [showPageNumberInGrid, setShowPageNumberInGrid] = useState<boolean>(false);
   const [minimumMargin, setMinimumMargin] = useState<number>(4); // Default to 4mm
   const [includePageZero, setIncludePageZero] = useState<boolean>(false);
-  const [pages, setPages] = useState<Page[]>([{ id: 1, side: 'Left' }]);
-  const [selectedPages, setSelectedPages] = useState<number[]>([]);
+  const [pages, setPages] = useState<Page[]>([{ id: uuidv4(), number: 1, side: 'Left', title: '' }]);
+  const [selectedPages, setSelectedPages] = useState<string[]>([]);
+  const [pageBackgroundColor, setPageBackgroundColor] = useState<string>('#ffffff');
 
   const [gridAlignment, setGridAlignment] = useState<GridAlignment>('float');
+  const [gridLineThickness, setGridLineThickness] = useState<number>(0.1); // Default to 0.1mm
 
   const handleBackgroundClick = useCallback(() => {
     setSelectedPages([]);
   }, []);
 
-  const togglePageSelection = useCallback((pageId: number) => {
+  const togglePageSelection = useCallback((pageId: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent the click from bubbling up to the main container
     setSelectedPages(prev => 
       prev.includes(pageId) 
         ? prev.filter(id => id !== pageId) 
@@ -41,12 +47,34 @@ function App() {
     );
   }, []);
 
+  const updatePageNumbers = useCallback(() => {
+    setPages(prevPages => 
+      prevPages.map((page, index) => ({
+        ...page,
+        number: includePageZero ? index : index + 1,
+        side: (includePageZero ? index + 1 : index) % 2 === 0 ? 'Left' : 'Right'
+      }))
+    );
+  }, [includePageZero]);
+
   const addPage = () => {
     const newPage: Page = {
-      id: pages.length + (includePageZero ? 0 : 1),
-      side: (pages.length + (includePageZero ? 1 : 0)) % 2 === 0 ? 'Left' : 'Right'
+      id: uuidv4(),
+      number: pages.length + (includePageZero ? 0 : 1),
+      side: (pages.length + (includePageZero ? 1 : 0)) % 2 === 0 ? 'Left' : 'Right',
+      title: ''
     };
-    setPages([...pages, newPage]);
+    setPages(prevPages => [...prevPages, newPage]);
+  };
+
+  useEffect(() => {
+    updatePageNumbers();
+  }, [includePageZero, updatePageNumbers]);
+
+  const updatePageTitle = (id: string, title: string) => {
+    setPages(pages.map(page => 
+      page.id === id ? { ...page, title } : page
+    ));
   };
 
   return (
@@ -69,23 +97,31 @@ function App() {
           minimumMargin={minimumMargin}
           setMinimumMargin={setMinimumMargin}
           includePageZero={includePageZero}
-          setIncludePageZero={setIncludePageZero}
+          setIncludePageZero={(value) => {
+            setIncludePageZero(value);
+            updatePageNumbers();
+          }}
           gridAlignment={gridAlignment}
           setGridAlignment={setGridAlignment}
           selectedPages={selectedPages}
           setSelectedPages={setSelectedPages}
           pages={pages}
           addPage={addPage}
+          updatePageTitle={updatePageTitle}
+          pageBackgroundColor={pageBackgroundColor}
+          setPageBackgroundColor={setPageBackgroundColor}
+          gridLineThickness={gridLineThickness}
+          setGridLineThickness={setGridLineThickness}
         />
       </aside>
       <main 
-        className="flex-grow p-4 overflow-auto"
+        className="flex-grow p-4 overflow-auto bg-gray-200"
         onClick={handleBackgroundClick}
       >
         <div className="flex flex-wrap justify-center gap-4" onClick={(e) => e.stopPropagation()}>
           {includePageZero && (
             <GridPaper
-              key={0}
+              key="page-0"
               gridSize={gridSize}
               paperSize={paperSize}
               gridColor={gridColor}
@@ -96,8 +132,12 @@ function App() {
               pageNumber={0}
               side="Right"
               gridAlignment={gridAlignment}
-              isSelected={selectedPages.includes(0)}
-              onSelect={() => togglePageSelection(0)}
+              isSelected={selectedPages.includes("page-0")}
+              onSelect={(event) => togglePageSelection("page-0", event)}
+              title=""
+              onTitleChange={(title) => updatePageTitle("page-0", title)}
+              pageBackgroundColor={pageBackgroundColor}
+              gridLineThickness={gridLineThickness}
             />
           )}
           {pages.map((page) => (
@@ -110,11 +150,15 @@ function App() {
               showExtraMargin={showExtraMargin}
               showPageNumberInGrid={showPageNumberInGrid}
               minimumMargin={minimumMargin}
-              pageNumber={page.id}
+              pageNumber={page.number}
               side={page.side}
               gridAlignment={gridAlignment}
               isSelected={selectedPages.includes(page.id)}
-              onSelect={() => togglePageSelection(page.id)}
+              onSelect={(event) => togglePageSelection(page.id, event)}
+              title={page.title}
+              onTitleChange={(title) => updatePageTitle(page.id, title)}
+              pageBackgroundColor={pageBackgroundColor}
+              gridLineThickness={gridLineThickness}
             />
           ))}
         </div>
