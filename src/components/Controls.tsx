@@ -1,5 +1,5 @@
 import React from 'react';
-import { GridSize, PaperSize } from '../App';
+import { GridSize, PaperSize, GridAlignment } from '../App';
 
 interface ControlsProps {
   gridSize: GridSize;
@@ -15,6 +15,12 @@ interface ControlsProps {
   showPageNumberInGrid: boolean;
   setShowPageNumberInGrid: (show: boolean) => void;
   addPage: () => void;
+  minimumMargin: number;
+  setMinimumMargin: (margin: number) => void;
+  includePageZero: boolean;
+  setIncludePageZero: (include: boolean) => void;
+  gridAlignment: GridAlignment;
+  setGridAlignment: (alignment: GridAlignment) => void;
 }
 
 const Controls: React.FC<ControlsProps> = ({
@@ -31,6 +37,12 @@ const Controls: React.FC<ControlsProps> = ({
   showPageNumberInGrid,
   setShowPageNumberInGrid,
   addPage,
+  minimumMargin,
+  setMinimumMargin,
+  includePageZero,
+  setIncludePageZero,
+  gridAlignment,
+  setGridAlignment,
 }) => {
   return (
     <div className="space-y-4">
@@ -71,6 +83,7 @@ const Controls: React.FC<ControlsProps> = ({
           <option value="pocket-plus">Pocket Plus</option>
           <option value="half-letter">Half Letter</option>
           <option value="tn-standard">Traveler's Notebook Standard</option>
+          <option value="tns-plus">TNS Plus (TN Standard + 0.5cm width)</option>
           <option value="tn-passport">Traveler's Notebook Passport</option>
           <option value="hobonichi-weeks">Hobonichi Weeks</option>
         </select>
@@ -120,6 +133,41 @@ const Controls: React.FC<ControlsProps> = ({
           />
           Show Page Number in Grid
         </label>
+      </div>
+      <div>
+        <label htmlFor="minimumMargin" className="block mb-1">Minimum Margin (mm):</label>
+        <input
+          type="number"
+          id="minimumMargin"
+          value={minimumMargin}
+          onChange={(e) => setMinimumMargin(Math.max(0, parseInt(e.target.value)))}
+          min="0"
+          className="w-full border rounded p-1"
+        />
+      </div>
+      <div>
+        <label htmlFor="includePageZero" className="flex items-center">
+          <input
+            type="checkbox"
+            id="includePageZero"
+            checked={includePageZero}
+            onChange={(e) => setIncludePageZero(e.target.checked)}
+            className="mr-2"
+          />
+          Include Page 0 (Right Side)
+        </label>
+      </div>
+      <div>
+        <label htmlFor="gridAlignment" className="block mb-1">Grid Alignment:</label>
+        <select
+          id="gridAlignment"
+          value={gridAlignment}
+          onChange={(e) => setGridAlignment(e.target.value as GridAlignment)}
+          className="w-full border rounded p-1"
+        >
+          <option value="center">Center</option>
+          <option value="float">Float to Edge</option>
+        </select>
       </div>
       <div>
         <button

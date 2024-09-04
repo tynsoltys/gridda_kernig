@@ -6,7 +6,9 @@ export type GridSize = '2mm' | '3mm' | '3.94mm' | '4mm' | '5mm';
 export type PaperSize = 
   'a7' | 'a6' | 'a5' | 'b6' | 'b6-slim' | 'b5' | 'b5-slim' | 
   'fc-compact' | 'personal' | 'personal-wide' | 'pocket' | 'pocket-plus' | 
-  'half-letter' | 'tn-standard' | 'tn-passport' | 'hobonichi-weeks';
+  'half-letter' | 'tn-standard' | 'tn-passport' | 'hobonichi-weeks' | 'tns-plus';
+
+export type GridAlignment = 'center' | 'float';
 
 export interface Page {
   id: number;
@@ -20,12 +22,16 @@ function App() {
   const [showBorder, setShowBorder] = useState<boolean>(false);
   const [showExtraMargin, setShowExtraMargin] = useState<boolean>(false);
   const [showPageNumberInGrid, setShowPageNumberInGrid] = useState<boolean>(false);
+  const [minimumMargin, setMinimumMargin] = useState<number>(4); // Default to 4mm
+  const [includePageZero, setIncludePageZero] = useState<boolean>(false);
   const [pages, setPages] = useState<Page[]>([{ id: 1, side: 'Left' }]);
+
+  const [gridAlignment, setGridAlignment] = useState<GridAlignment>('float');
 
   const addPage = () => {
     const newPage: Page = {
-      id: pages.length + 1,
-      side: pages.length % 2 === 0 ? 'Left' : 'Right'
+      id: pages.length + (includePageZero ? 0 : 1),
+      side: (pages.length + (includePageZero ? 1 : 0)) % 2 === 0 ? 'Left' : 'Right'
     };
     setPages([...pages, newPage]);
   };
@@ -47,11 +53,32 @@ function App() {
           setShowExtraMargin={setShowExtraMargin}
           showPageNumberInGrid={showPageNumberInGrid}
           setShowPageNumberInGrid={setShowPageNumberInGrid}
+          minimumMargin={minimumMargin}
+          setMinimumMargin={setMinimumMargin}
+          includePageZero={includePageZero}
+          setIncludePageZero={setIncludePageZero}
           addPage={addPage}
+          gridAlignment={gridAlignment}
+          setGridAlignment={setGridAlignment}
         />
       </aside>
       <main className="flex-grow p-4 overflow-auto">
         <div className="flex flex-wrap justify-center gap-4">
+          {includePageZero && (
+            <GridPaper
+              key={0}
+              gridSize={gridSize}
+              paperSize={paperSize}
+              gridColor={gridColor}
+              showBorder={showBorder}
+              showExtraMargin={showExtraMargin}
+              showPageNumberInGrid={showPageNumberInGrid}
+              minimumMargin={minimumMargin}
+              pageNumber={0}
+              side="Right"
+              gridAlignment={gridAlignment}
+            />
+          )}
           {pages.map((page) => (
             <GridPaper
               key={page.id}
@@ -61,8 +88,10 @@ function App() {
               showBorder={showBorder}
               showExtraMargin={showExtraMargin}
               showPageNumberInGrid={showPageNumberInGrid}
+              minimumMargin={minimumMargin}
               pageNumber={page.id}
               side={page.side}
+              gridAlignment={gridAlignment}
             />
           ))}
         </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { GridSize, PaperSize } from '../App';
+import { GridSize, PaperSize, GridAlignment } from '../App';
 
 interface GridPaperProps {
   gridSize: GridSize;
@@ -8,8 +8,10 @@ interface GridPaperProps {
   showBorder: boolean;
   showExtraMargin: boolean;
   showPageNumberInGrid: boolean;
+  minimumMargin: number;
   pageNumber: number;
   side: 'Left' | 'Right';
+  gridAlignment: GridAlignment;
 }
 
 const GridPaper: React.FC<GridPaperProps> = ({ 
@@ -19,8 +21,10 @@ const GridPaper: React.FC<GridPaperProps> = ({
   showBorder, 
   showExtraMargin,
   showPageNumberInGrid,
+  minimumMargin,
   pageNumber, 
-  side 
+  side,
+  gridAlignment
 }) => {
   const getPaperDimensions = (size: PaperSize): { width: number; height: number } => {
     switch (size) {
@@ -38,6 +42,7 @@ const GridPaper: React.FC<GridPaperProps> = ({
       case 'pocket-plus': return { width: 89, height: 140 };
       case 'half-letter': return { width: 140, height: 216 };
       case 'tn-standard': return { width: 110, height: 210 };
+      case 'tns-plus': return { width: 115, height: 210 }; // 0.5cm (5mm) wider than tn-standard
       case 'tn-passport': return { width: 90, height: 130 };
       case 'hobonichi-weeks': return { width: 95, height: 190 };
     }
@@ -45,7 +50,7 @@ const GridPaper: React.FC<GridPaperProps> = ({
 
   const { width, height } = getPaperDimensions(paperSize);
   const gridSizeNum = parseFloat(gridSize);
-  const margin = 5; // 0.5cm margin in mm
+  const margin = minimumMargin;
   const extraMargin = showExtraMargin ? 10 : 0; // 1cm extra margin if enabled
 
   // Calculate the number of rows and columns
@@ -56,31 +61,53 @@ const GridPaper: React.FC<GridPaperProps> = ({
   const gridWidth = columns * gridSizeNum;
   const gridHeight = rows * gridSizeNum;
 
-  // Calculate the starting position to center the grid
-  const startX = side === 'Left' 
-    ? (width - gridWidth - extraMargin) / 2 
-    : (width - gridWidth + extraMargin) / 2;
+  // Calculate the starting position to align the grid
+  const startX = (() => {
+    if (gridAlignment === 'center') {
+      return (width - gridWidth - extraMargin) / 2;
+    } else { // 'float'
+      return side === 'Left' 
+        ? margin 
+        : width - margin - gridWidth - extraMargin;
+    }
+  })();
+
+  // Apply extra margin to the correct side
+  const extraMarginOffset = side === 'Left' ? 0 : extraMargin;
+  const adjustedStartX = startX + extraMarginOffset;
+
   const startY = (height - gridHeight) / 2;
 
   const createGridLines = () => {
     const lines = [];
     // Vertical lines
     for (let i = 0; i <= columns; i++) {
-      const x = startX + i * gridSizeNum;
+      const x = adjustedStartX + i * gridSizeNum;
       lines.push(<line key={`v${i}`} x1={`${x}mm`} y1={`${startY}mm`} x2={`${x}mm`} y2={`${startY + gridHeight}mm`} stroke={gridColor} strokeWidth="0.1" />);
     }
     // Horizontal lines
     for (let i = 0; i <= rows; i++) {
       const y = startY + i * gridSizeNum;
-      lines.push(<line key={`h${i}`} x1={`${startX}mm`} y1={`${y}mm`} x2={`${startX + gridWidth}mm`} y2={`${y}mm`} stroke={gridColor} strokeWidth="0.1" />);
+      lines.push(<line key={`h${i}`} x1={`${adjustedStartX}mm`} y1={`${y}mm`} x2={`${adjustedStartX + gridWidth}mm`} y2={`${y}mm`} stroke={gridColor} strokeWidth="0.1" />);
     }
     return lines;
   };
 
   const pageNumberX = side === 'Left' 
-    ? startX + gridSizeNum / 2 
-    : startX + gridWidth - gridSizeNum / 2;
+    ? adjustedStartX + gridSizeNum / 2 
+    : adjustedStartX + gridWidth - gridSizeNum / 2;
   const pageNumberY = startY + gridHeight - gridSizeNum / 2;
+
+  // Calculate wordmark position
+  const wordmarkX = side === 'Left' 
+    ? width - margin / 2 
+    : margin / 2;
+  const wordmarkY = height / 2;
+
+  // Function to lighten the grid color
+  const lightenColor = (color: string, amount: number) => {
+    return '#' + color.replace(/^#/, '').replace(/../g, color => ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
+  };
 
   return (
     <div className="relative" style={{ width: `${width}mm`, height: `${height}mm`, margin: '20px' }}>
@@ -91,7 +118,7 @@ const GridPaper: React.FC<GridPaperProps> = ({
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
           {showBorder && (
             <rect 
-              x={`${startX}mm`} 
+              x={`${adjustedStartX}mm`} 
               y={`${startY}mm`} 
               width={`${gridWidth}mm`} 
               height={`${gridHeight}mm`} 
@@ -107,12 +134,26 @@ const GridPaper: React.FC<GridPaperProps> = ({
               y={`${pageNumberY}mm`}
               textAnchor="middle"
               dominantBaseline="middle"
-              fontSize={`${gridSizeNum * 0.6}mm`}
-              fill={gridColor}
+              fontSize={`${gridSizeNum * 0.5}mm`}
+              fill={lightenColor(gridColor, 100)}
+              opacity="0.6"
             >
               {pageNumber}
             </text>
           )}
+          {/* Wordmark */}
+          <text
+            x={`${wordmarkX}mm`}
+            y={`${wordmarkY}mm`}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="6"
+            fill={gridColor}
+            opacity="1"
+            transform={`rotate(90, ${wordmarkX}, ${wordmarkY})`}
+          >
+            @kooknhakn
+          </text>
         </svg>
       </div>
     </div>
