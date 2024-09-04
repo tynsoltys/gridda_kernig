@@ -26,10 +26,13 @@ function App() {
   const [showExtraMargin, setShowExtraMargin] = useState<boolean>(false);
   const [showPageNumberInGrid, setShowPageNumberInGrid] = useState<boolean>(false);
   const [minimumMargin, setMinimumMargin] = useState<number>(4); // Default to 4mm
-  const [includePageZero, setIncludePageZero] = useState<boolean>(false);
-  const [pages, setPages] = useState<Page[]>([{ id: uuidv4(), number: 1, side: 'Left', title: '' }]);
+  const [pages, setPages] = useState<Page[]>([
+    { id: uuidv4(), number: 1, side: 'Right', title: '' }
+  ]);
   const [selectedPages, setSelectedPages] = useState<string[]>([]);
   const [pageBackgroundColor, setPageBackgroundColor] = useState<string>('#ffffff');
+  const [startAtZero, setStartAtZero] = useState(false);
+  const [firstPageSide, setFirstPageSide] = useState<'Left' | 'Right'>('Right');
 
   const [gridAlignment, setGridAlignment] = useState<GridAlignment>('float');
   const [gridLineThickness, setGridLineThickness] = useState<number>(0.1); // Default to 0.1mm
@@ -47,35 +50,69 @@ function App() {
     );
   }, []);
 
+  const updatePageOrder = useCallback(() => {
+    setPages(prevPages => 
+      prevPages.map((page, index) => ({
+        ...page,
+        number: index + 1,
+        side: (index + 1) % 2 === 0 ? 'Left' : 'Right'
+      }))
+    );
+  }, []);
+
   const updatePageNumbers = useCallback(() => {
     setPages(prevPages => 
       prevPages.map((page, index) => ({
         ...page,
-        number: includePageZero ? index : index + 1,
-        side: (includePageZero ? index + 1 : index) % 2 === 0 ? 'Left' : 'Right'
+        number: startAtZero ? index : index + 1,
+        side: startAtZero ? 
+          (index % 2 === 0 ? 'Right' : 'Left') : 
+          (index % 2 === 0 ? 'Left' : 'Right')
       }))
     );
-  }, [includePageZero]);
+  }, [startAtZero]);
 
-  const addPage = () => {
-    const newPage: Page = {
-      id: uuidv4(),
-      number: pages.length + (includePageZero ? 0 : 1),
-      side: (pages.length + (includePageZero ? 1 : 0)) % 2 === 0 ? 'Left' : 'Right',
-      title: ''
-    };
-    setPages(prevPages => [...prevPages, newPage]);
-  };
+  const updatePages = useCallback(() => {
+    setPages(prevPages => 
+      prevPages.map((page, index) => ({
+        ...page,
+        number: startAtZero ? index : index + 1,
+        side: index % 2 === 0 ? firstPageSide : (firstPageSide === 'Left' ? 'Right' : 'Left')
+      }))
+    );
+  }, [startAtZero, firstPageSide]);
+
+  const addPage = useCallback(() => {
+    setPages(prevPages => {
+      const newPageNumber = startAtZero ? prevPages.length : prevPages.length + 1;
+      const newPageSide = prevPages.length % 2 === 0 ? 
+        (firstPageSide === 'Left' ? 'Right' : 'Left') : 
+        firstPageSide;
+      return [
+        ...prevPages,
+        {
+          id: uuidv4(),
+          number: newPageNumber,
+          side: newPageSide,
+          title: ''
+        }
+      ];
+    });
+  }, [startAtZero, firstPageSide]);
 
   useEffect(() => {
-    updatePageNumbers();
-  }, [includePageZero, updatePageNumbers]);
+    updatePages();
+  }, [startAtZero, firstPageSide, updatePages]);
 
   const updatePageTitle = (id: string, title: string) => {
     setPages(pages.map(page => 
       page.id === id ? { ...page, title } : page
     ));
   };
+
+  useEffect(() => {
+    updatePageNumbers();
+  }, [startAtZero, updatePageNumbers]);
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
@@ -96,22 +133,19 @@ function App() {
           setShowPageNumberInGrid={setShowPageNumberInGrid}
           minimumMargin={minimumMargin}
           setMinimumMargin={setMinimumMargin}
-          includePageZero={includePageZero}
-          setIncludePageZero={(value) => {
-            setIncludePageZero(value);
-            updatePageNumbers();
-          }}
-          gridAlignment={gridAlignment}
-          setGridAlignment={setGridAlignment}
-          selectedPages={selectedPages}
-          setSelectedPages={setSelectedPages}
-          pages={pages}
           addPage={addPage}
           updatePageTitle={updatePageTitle}
           pageBackgroundColor={pageBackgroundColor}
           setPageBackgroundColor={setPageBackgroundColor}
           gridLineThickness={gridLineThickness}
           setGridLineThickness={setGridLineThickness}
+          selectedPages={selectedPages}
+          setSelectedPages={setSelectedPages}
+          pages={pages}
+          startAtZero={startAtZero}
+          setStartAtZero={setStartAtZero}
+          firstPageSide={firstPageSide}
+          setFirstPageSide={setFirstPageSide}
         />
       </aside>
       <main 
@@ -119,27 +153,6 @@ function App() {
         onClick={handleBackgroundClick}
       >
         <div className="flex flex-wrap justify-center gap-4" onClick={(e) => e.stopPropagation()}>
-          {includePageZero && (
-            <GridPaper
-              key="page-0"
-              gridSize={gridSize}
-              paperSize={paperSize}
-              gridColor={gridColor}
-              showBorder={showBorder}
-              showExtraMargin={showExtraMargin}
-              showPageNumberInGrid={showPageNumberInGrid}
-              minimumMargin={minimumMargin}
-              pageNumber={0}
-              side="Right"
-              gridAlignment={gridAlignment}
-              isSelected={selectedPages.includes("page-0")}
-              onSelect={(event) => togglePageSelection("page-0", event)}
-              title=""
-              onTitleChange={(title) => updatePageTitle("page-0", title)}
-              pageBackgroundColor={pageBackgroundColor}
-              gridLineThickness={gridLineThickness}
-            />
-          )}
           {pages.map((page) => (
             <GridPaper
               key={page.id}

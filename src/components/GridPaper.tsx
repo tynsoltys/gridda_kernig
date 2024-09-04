@@ -28,9 +28,9 @@ const GridPaper: React.FC<GridPaperProps> = ({
   showExtraMargin,
   showPageNumberInGrid,
   minimumMargin,
+  gridAlignment,
   pageNumber, 
   side,
-  gridAlignment,
   isSelected,
   onSelect,
   title,
@@ -110,17 +110,6 @@ const GridPaper: React.FC<GridPaperProps> = ({
     : adjustedStartX + gridWidth - gridSizeNum / 2;
   const pageNumberY = startY + gridHeight - gridSizeNum / 2;
 
-  // Calculate wordmark position
-  const wordmarkX = side === 'Left' 
-    ? width - margin / 2 
-    : margin / 2;
-  const wordmarkY = height / 2;
-
-  // Function to lighten the grid color
-  const lightenColor = (color: string, amount: number) => {
-    return '#' + color.replace(/^#/, '').replace(/../g, color => ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
-  };
-
   return (
     <div className="flex flex-col items-center mb-8">
       <div 
@@ -128,17 +117,6 @@ const GridPaper: React.FC<GridPaperProps> = ({
         style={{ width: `${width}mm`, cursor: 'pointer' }}
         onClick={onSelect}
       >
-        <div className="absolute top-0 left-0 right-0 h-8 flex items-center px-2">
-          <span className="text-sm font-medium mr-2">Page {pageNumber} - {side}</span>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => onTitleChange(e.target.value)}
-            placeholder="Add title"
-            className="flex-grow bg-transparent border-b border-gray-300 px-1 py-0.5 text-sm focus:outline-none focus:border-blue-500"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
         <div 
           className={`border border-gray-300 print:border-0 w-full mt-8 ${isSelected ? 'ring-4 ring-blue-300 ring-opacity-50' : ''}`}
           style={{ backgroundColor: pageBackgroundColor, height: `${height}mm` }}
@@ -163,25 +141,12 @@ const GridPaper: React.FC<GridPaperProps> = ({
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fontSize={`${gridSizeNum * 0.5}mm`}
-                fill={lightenColor(gridColor, 100)}
+                fill={gridColor}
                 opacity="0.6"
               >
                 {pageNumber}
               </text>
             )}
-            {/* Wordmark */}
-            <text
-              x={`${wordmarkX}mm`}
-              y={`${wordmarkY}mm`}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize="2mm"
-              fill={lightenColor(gridColor, 150)}
-              opacity="0.4"
-              transform={`rotate(90, ${wordmarkX}, ${wordmarkY})`}
-            >
-              @kooknhakn
-            </text>
           </svg>
         </div>
       </div>
