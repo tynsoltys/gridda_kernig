@@ -1,0 +1,74 @@
+import React, { useState } from 'react';
+import GridPaper from './components/GridPaper';
+import Controls from './components/Controls';
+
+export type GridSize = '2mm' | '3mm' | '3.94mm' | '4mm' | '5mm';
+export type PaperSize = 
+  'a7' | 'a6' | 'a5' | 'b6' | 'b6-slim' | 'b5' | 'b5-slim' | 
+  'fc-compact' | 'personal' | 'personal-wide' | 'pocket' | 'pocket-plus' | 
+  'half-letter' | 'tn-standard' | 'tn-passport' | 'hobonichi-weeks';
+
+export interface Page {
+  id: number;
+  side: 'Left' | 'Right';
+}
+
+function App() {
+  const [gridSize, setGridSize] = useState<GridSize>('5mm');
+  const [paperSize, setPaperSize] = useState<PaperSize>('a5');
+  const [gridColor, setGridColor] = useState<string>('#000000');
+  const [showBorder, setShowBorder] = useState<boolean>(false);
+  const [showExtraMargin, setShowExtraMargin] = useState<boolean>(false);
+  const [showPageNumberInGrid, setShowPageNumberInGrid] = useState<boolean>(false);
+  const [pages, setPages] = useState<Page[]>([{ id: 1, side: 'Left' }]);
+
+  const addPage = () => {
+    const newPage: Page = {
+      id: pages.length + 1,
+      side: pages.length % 2 === 0 ? 'Left' : 'Right'
+    };
+    setPages([...pages, newPage]);
+  };
+
+  return (
+    <div className="flex flex-col md:flex-row min-h-screen">
+      <aside className="w-64 flex-shrink-0 bg-gray-100 p-4 overflow-y-auto">
+        <h1 className="text-2xl font-bold mb-4">Gridda Kernig V2</h1>
+        <Controls
+          gridSize={gridSize}
+          setGridSize={setGridSize}
+          paperSize={paperSize}
+          setPaperSize={setPaperSize}
+          gridColor={gridColor}
+          setGridColor={setGridColor}
+          showBorder={showBorder}
+          setShowBorder={setShowBorder}
+          showExtraMargin={showExtraMargin}
+          setShowExtraMargin={setShowExtraMargin}
+          showPageNumberInGrid={showPageNumberInGrid}
+          setShowPageNumberInGrid={setShowPageNumberInGrid}
+          addPage={addPage}
+        />
+      </aside>
+      <main className="flex-grow p-4 overflow-auto">
+        <div className="flex flex-wrap justify-center gap-4">
+          {pages.map((page) => (
+            <GridPaper
+              key={page.id}
+              gridSize={gridSize}
+              paperSize={paperSize}
+              gridColor={gridColor}
+              showBorder={showBorder}
+              showExtraMargin={showExtraMargin}
+              showPageNumberInGrid={showPageNumberInGrid}
+              pageNumber={page.id}
+              side={page.side}
+            />
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export default App;
