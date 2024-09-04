@@ -21,6 +21,9 @@ interface ControlsProps {
   setIncludePageZero: (include: boolean) => void;
   gridAlignment: GridAlignment;
   setGridAlignment: (alignment: GridAlignment) => void;
+  selectedPages: number[];
+  setSelectedPages: React.Dispatch<React.SetStateAction<number[]>>;
+  pages: { id: number; side: 'Left' | 'Right' }[];
 }
 
 const Controls: React.FC<ControlsProps> = ({
@@ -43,7 +46,19 @@ const Controls: React.FC<ControlsProps> = ({
   setIncludePageZero,
   gridAlignment,
   setGridAlignment,
+  selectedPages,
+  setSelectedPages,
+  pages,
 }) => {
+  const handleSelectAll = () => {
+    const allPageIds = Array.from({ length: pages.length + (includePageZero ? 1 : 0) }, (_, i) => i);
+    setSelectedPages(allPageIds);
+  };
+
+  const handleClearSelections = () => {
+    setSelectedPages([]);
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -175,6 +190,20 @@ const Controls: React.FC<ControlsProps> = ({
           className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
         >
           Add Page
+        </button>
+      </div>
+      <div className="flex space-x-2">
+        <button
+          onClick={handleSelectAll}
+          className="flex-1 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+        >
+          Select All
+        </button>
+        <button
+          onClick={handleClearSelections}
+          className="flex-1 bg-gray-300 text-gray-800 py-2 px-4 rounded hover:bg-gray-400"
+        >
+          Clear Selections
         </button>
       </div>
     </div>

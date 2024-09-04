@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import GridPaper from './components/GridPaper';
 import Controls from './components/Controls';
 
@@ -25,8 +25,21 @@ function App() {
   const [minimumMargin, setMinimumMargin] = useState<number>(4); // Default to 4mm
   const [includePageZero, setIncludePageZero] = useState<boolean>(false);
   const [pages, setPages] = useState<Page[]>([{ id: 1, side: 'Left' }]);
+  const [selectedPages, setSelectedPages] = useState<number[]>([]);
 
   const [gridAlignment, setGridAlignment] = useState<GridAlignment>('float');
+
+  const handleBackgroundClick = useCallback(() => {
+    setSelectedPages([]);
+  }, []);
+
+  const togglePageSelection = useCallback((pageId: number) => {
+    setSelectedPages(prev => 
+      prev.includes(pageId) 
+        ? prev.filter(id => id !== pageId) 
+        : [...prev, pageId]
+    );
+  }, []);
 
   const addPage = () => {
     const newPage: Page = {
@@ -57,13 +70,19 @@ function App() {
           setMinimumMargin={setMinimumMargin}
           includePageZero={includePageZero}
           setIncludePageZero={setIncludePageZero}
-          addPage={addPage}
           gridAlignment={gridAlignment}
           setGridAlignment={setGridAlignment}
+          selectedPages={selectedPages}
+          setSelectedPages={setSelectedPages}
+          pages={pages}
+          addPage={addPage}
         />
       </aside>
-      <main className="flex-grow p-4 overflow-auto">
-        <div className="flex flex-wrap justify-center gap-4">
+      <main 
+        className="flex-grow p-4 overflow-auto"
+        onClick={handleBackgroundClick}
+      >
+        <div className="flex flex-wrap justify-center gap-4" onClick={(e) => e.stopPropagation()}>
           {includePageZero && (
             <GridPaper
               key={0}
@@ -77,6 +96,8 @@ function App() {
               pageNumber={0}
               side="Right"
               gridAlignment={gridAlignment}
+              isSelected={selectedPages.includes(0)}
+              onSelect={() => togglePageSelection(0)}
             />
           )}
           {pages.map((page) => (
@@ -92,6 +113,8 @@ function App() {
               pageNumber={page.id}
               side={page.side}
               gridAlignment={gridAlignment}
+              isSelected={selectedPages.includes(page.id)}
+              onSelect={() => togglePageSelection(page.id)}
             />
           ))}
         </div>

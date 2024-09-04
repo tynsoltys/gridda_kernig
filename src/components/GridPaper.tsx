@@ -12,6 +12,8 @@ interface GridPaperProps {
   pageNumber: number;
   side: 'Left' | 'Right';
   gridAlignment: GridAlignment;
+  isSelected: boolean;
+  onSelect: () => void;
 }
 
 const GridPaper: React.FC<GridPaperProps> = ({ 
@@ -24,7 +26,9 @@ const GridPaper: React.FC<GridPaperProps> = ({
   minimumMargin,
   pageNumber, 
   side,
-  gridAlignment
+  gridAlignment,
+  isSelected,
+  onSelect
 }) => {
   const getPaperDimensions = (size: PaperSize): { width: number; height: number } => {
     switch (size) {
@@ -110,7 +114,14 @@ const GridPaper: React.FC<GridPaperProps> = ({
   };
 
   return (
-    <div className="relative" style={{ width: `${width}mm`, height: `${height}mm`, margin: '20px' }}>
+    <div 
+      className={`relative ${isSelected ? 'ring-4 ring-blue-300 ring-opacity-50' : ''}`} 
+      style={{ width: `${width}mm`, height: `${height}mm`, margin: '20px', cursor: 'pointer' }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect();
+      }}
+    >
       <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full bg-white px-2 py-1 rounded shadow text-sm">
         Page {pageNumber} - {side}
       </div>
